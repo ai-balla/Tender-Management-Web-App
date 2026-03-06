@@ -17,6 +17,66 @@ let state = {
     currentPg: 1, perPage: 8,
 };
 
+/* ── Utilities ──────────────────────────────────────────────── */
+function formatSAR(amount) {
+    if (amount === null || amount === undefined) return '0.00 ﷼';
+    return Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ﷼';
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr);
+    return isNaN(d) ? '—' : d.toLocaleDateString('ar-SA');
+}
+
+function formatDatetime(dateStr) {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr);
+    return isNaN(d) ? '—' : d.toLocaleString('ar-SA', { hour12: true, dateStyle: 'short', timeStyle: 'short' });
+}
+
+// Labels for tables
+const STATUS_LABELS = {
+    'draft': { label: 'مسودة', badge: 'badge-draft' },
+    'submitted': { label: 'مقدمة', badge: 'badge-submitted' },
+    'under_review': { label: 'تحت المراجعة', badge: 'badge-review' },
+    'won': { label: 'فاز', badge: 'badge-won' },
+    'lost': { label: 'خسر', badge: 'badge-lost' },
+    'ongoing': { label: 'جارٍ', badge: 'badge-ongoing' },
+    'not_submitted': { label: 'لم يقدّم', badge: 'badge-not-sub' },
+};
+
+const CATEGORY_LABELS = {
+    'Supply': 'توريد',
+    'Contracting': 'مقاولات',
+    'Marine': 'بحري',
+    'Other': 'أخرى'
+};
+
+const ROLE_LABELS = {
+    'admin': { label: 'مسؤول', bg: 'var(--danger-light)', color: 'var(--danger)' },
+    'manager': { label: 'مدير', bg: 'var(--primary-ultra)', color: 'var(--primary-dark)' },
+    'editor': { label: 'محرر', bg: 'var(--success-light)', color: 'var(--success-dark)' },
+    'viewer': { label: 'مشاهد', bg: 'var(--bg2)', color: 'var(--text-muted)' }
+};
+
+// BOQ array math
+function boqLineTotal(c) {
+    return (parseFloat(c.qty) || 0) * (parseFloat(c.unit_price) || 0);
+}
+function boqGrandTotal(costs) {
+    return costs.reduce((s, c) => s + boqLineTotal(c), 0);
+}
+
+function csvEscape(text) {
+    if (text === null || text === undefined) return '';
+    let s = String(text);
+    if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+        return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+}
+
 /* ── Init ───────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', async () => {
     setupSidebar();
@@ -69,6 +129,7 @@ function applySettings() {
     const logo = state.settings.logo_custom || state.settings.logo_url;
     document.querySelectorAll('.company-logo').forEach(el => el.src = logo);
     document.querySelectorAll('.company-name').forEach(el => el.textContent = state.settings.name);
+    document.querySelectorAll('.company-name-en').forEach(el => el.textContent = state.settings.name_en);
     document.getElementById('nav-tender-count').textContent = state.tenders.length;
 }
 
